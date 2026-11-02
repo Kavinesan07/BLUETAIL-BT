@@ -1,11 +1,13 @@
+import traceback
 from decimal import Decimal
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
-from sqlalchemy.orm import Session , relationship
+from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import Address, Order, OrderItem, Product
+from ..models import Address, Order, OrderItem, Product, Users
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
@@ -21,7 +23,30 @@ class OrderCreate(BaseModel):
     items: list[OrderLine] = Field(min_length=1)
 
 
-def order_to_dict(order: Order) -> dict:
+def address_to_dict(address) -> dict | None:
+    if not address:
+        return None
+    return {
+        "id": address.id,
+        "street": address.street,
+        "city": address.city,
+        "state": address.state,
+        "pin_code": address.pin_code,
+        "phone_number": address.phone_number,
+    }
+
+
+def user_to_dict_simple(user) -> dict | None:
+    if not user:
+        return None
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+    }
+
+
+def order_to_dict(order: Order, address=None, user=None) -> dict:
     return {
         "id": order.id,
         "user_id": order.user_id,
@@ -29,11 +54,13 @@ def order_to_dict(order: Order) -> dict:
         "status": order.status,
         "total_amount": float(order.total_amount),
         "created_at": order.created_at.isoformat() if order.created_at else None,
+        "address": address_to_dict(address),
+        "user": user_to_dict_simple(user),
         "items": [
             {
                 "product_id": i.product_id,
                 "product_name": i.product_name,
-                "unit_price": float(i.unit_price),
+                "unit_price": float(i.product_price),
                 "quantity": i.quantity,
             }
             for i in order.items
@@ -43,7 +70,7 @@ def order_to_dict(order: Order) -> dict:
 
 @router.post("/create", status_code=201)
 def create_order(data: OrderCreate, db: Session = Depends(get_db)):
-    # 1. the address must exist and belong to this user
+   
     address = (
         db.query(Address)
         .filter(Address.id == data.address_id, Address.user_id == data.user_id)
@@ -52,14 +79,16 @@ def create_order(data: OrderCreate, db: Session = Depends(get_db)):
     if not address:
         raise HTTPException(status_code=404, detail="Address not found")
 
-    # 2. merge repeated products (the same product twice becomes one line)
+    user = db.query(Users).filter(Users.id == data.user_id).first()
+
+  
     wanted: dict[int, int] = {}
     for line in data.items:
         wanted[line.product_id] = wanted.get(line.product_id, 0) + line.quantity
 
     products = (
         db.query(Product)
-        .filter(Product.id.in_(list(wanted)), Product.is_deleted.is_(False))
+        .filter(Product.id.in_(list(wanted)), Product.is_deleted == False)
         .all()
     )
     by_id = {p.id: p for p in products}
@@ -81,7 +110,7 @@ def create_order(data: OrderCreate, db: Session = Depends(get_db)):
             # 3. take the stock in one safe step. It only works if enough stock is left.
             changed = (
                 db.query(Product)
-                .filter(Product.id == product_id, Product.is_deleted.is_(False), Product.stock >= qty)
+                .filter(Product.id == product_id, Product.is_deleted == False, Product.stock >= qty)
                 .update({Product.stock: Product.stock - qty}, synchronize_session=False)
             )
             if changed == 0:
@@ -94,7 +123,7 @@ def create_order(data: OrderCreate, db: Session = Depends(get_db)):
                 OrderItem(
                     product_id=product_id,
                     product_name=product.name,
-                    unit_price=unit_price,
+                    product_price=float(unit_price),
                     quantity=qty,
                 )
             )
@@ -107,21 +136,28 @@ def create_order(data: OrderCreate, db: Session = Depends(get_db)):
         raise
     except Exception:
         db.rollback()
+        traceback.print_exc()  
         raise HTTPException(status_code=500, detail="Could not create the order")
 
     db.refresh(order)
-    return order_to_dict(order)
+    return order_to_dict(order, address, user)
 
 
 @router.get("")
-def list_orders(user_id: int, db: Session = Depends(get_db)):
-    orders = (
-        db.query(Order)
-        .filter(Order.user_id == user_id)
-        .order_by(Order.id.desc())
-        .all()
-    )
-    return [order_to_dict(o) for o in orders]
+@router.get("/all")
+def list_orders(user_id: Optional[int] = None, db: Session = Depends(get_db)):
+    query = db.query(Order)
+    if user_id is not None:
+        query = query.filter(Order.user_id == user_id)
+    orders = query.order_by(Order.id.desc()).all()
+
+    address_ids = [o.address_id for o in orders if o.address_id]
+    user_ids = [o.user_id for o in orders if o.user_id]
+
+    addresses = {a.id: a for a in db.query(Address).filter(Address.id.in_(address_ids)).all()} if address_ids else {}
+    users = {u.id: u for u in db.query(Users).filter(Users.id.in_(user_ids)).all()} if user_ids else {}
+
+    return [order_to_dict(o, addresses.get(o.address_id), users.get(o.user_id)) for o in orders]
 
 
 @router.get("/{order_id}")
@@ -129,4 +165,6 @@ def get_order(order_id: int, db: Session = Depends(get_db)):
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
-    return order_to_dict(order)
+    address = db.query(Address).filter(Address.id == order.address_id).first()
+    user = db.query(Users).filter(Users.id == order.user_id).first()
+    return order_to_dict(order, address, user)

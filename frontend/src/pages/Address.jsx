@@ -3,10 +3,12 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import FormField from "../components/FormField";
 import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
 import { addressService } from "../services/addressservice";
 
 export default function Address() {
   const { user } = useAuth();
+  const { items } = useCart();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -47,6 +49,10 @@ export default function Address() {
   async function handleSubmit(e) {
     e.preventDefault();
     setServerError("");
+    if (items.length === 0) {
+      setServerError("Your cart is empty. Add a product first.");
+      return;
+    }
     if (!validate()) return;
 
     // Only the fields the backend expects (AddressCreate)
@@ -61,28 +67,30 @@ export default function Address() {
 
     setLoading(true);
     try {
+      // 1. save the address
       const saved = await addressService.create(payload);
-      const addressId = saved?.id ?? saved?.address?.id; // the id the backend gave to this address
-      if (addressId == null) {
-        throw new Error("The server did not return the saved address ID. Restart the backend and try again.");
+      const addressId = saved?.id ?? saved?.address?.id;
+      if (!addressId) {
+        setServerError("The address was saved but the server sent no id. Check what POST /address/create returns.");
+        return;
       }
 
-      // go to the Payment page and carry the address with us
-     navigate("/orders", {
-  state: {
-    checkout: true,
-    address: {
-      id: addressId,
-      name: form.name.trim(),
-      email: form.email.trim(),
-      phone_number: form.phone_number,
-      street: form.street.trim(),
-      city: form.city.trim(),
-      state: form.state.trim(),
-      pin_code: form.pin_code,
-    },
-  },
-});
+      // 2. navigate to the order review page
+      navigate("/orders", {
+        state: {
+          checkout: true,
+          address: {
+            id: addressId,
+            name: form.name.trim(),
+            email: form.email.trim(),
+            phone_number: form.phone_number,
+            street: form.street.trim(),
+            city: form.city.trim(),
+            state: form.state.trim(),
+            pin_code: form.pin_code,
+          },
+        },
+      });
     } catch (err) {
       setServerError(err.message);
     } finally {
