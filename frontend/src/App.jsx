@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+﻿import { Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute, GuestRoute } from "./components/RouteGuards";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -13,15 +13,11 @@ import Orders from "./pages/orders";
 
 export default function App() {
   return (
-
     <Routes>
       {/* Anyone can browse the shop, like Amazon */}
       <Route path="/" element={<Home />} />
       <Route path="/product/:id" element={<ProductDetail />} />
       <Route path="/cart" element={<Cart />} />
-      <Route path="/address" element={<Address />} />
-      <Route path="/payment" element={<Payment />} />
-      <Route path="/orders" element={<Orders />} />
 
       <Route element={<GuestRoute />}>
         <Route path="/login" element={<Login />} />
@@ -32,10 +28,12 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route path="/account" element={<Dashboard />} />
         <Route path="/admin/add-product" element={<AddProduct />} />
+        <Route path="/address" element={<Address />} />
+        <Route path="/orders" element={<Orders />} />
+        <Route path="/payment" element={<Payment />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
-
   );
 }
