@@ -10,18 +10,18 @@ from ..models import Users
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-
-
 class UserCreate(BaseModel):
     username: str = Field(min_length=2, max_length=100)
     email: EmailStr
     password: str = Field(min_length=6, max_length=72)
+    role: Optional[int] = 0
 
 
 class UserUpdate(BaseModel):
     username: Optional[str] = Field(default=None, min_length=2, max_length=100)
     email: Optional[EmailStr] = None
     password: Optional[str] = Field(default=None, min_length=6, max_length=72)
+    role: Optional[int] = None
 
 
 class UserLogin(BaseModel):
@@ -29,19 +29,8 @@ class UserLogin(BaseModel):
     password: str
 
 
-def user_to_dict(user):
-    return {
-        "id": user.id,
-        "username": user.username,
-        "email": user.email,
-        "created_at": user.created_at.isoformat() if user.created_at else None,
-        "updated_at": user.updated_at.isoformat() if user.updated_at else None,
-    }
-
-
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-
 
 
 @router.post("/create", status_code=201)
@@ -53,6 +42,7 @@ def create_user(data: UserCreate, db: Session = Depends(get_db)):
         username=data.username,
         email=data.email,
         hashed_password=hash_password(data.password),
+        role=data.role if data.role is not None else 0,
     )
     try:
         db.add(user)
@@ -65,7 +55,6 @@ def create_user(data: UserCreate, db: Session = Depends(get_db)):
     return {"message": "User created successfully!", "user": user_to_dict(user)}
 
 
-
 @router.post("/login")
 def login_user(data: UserLogin, db: Session = Depends(get_db)):
     user = db.query(Users).filter(Users.email == data.email).first()
@@ -76,4 +65,19 @@ def login_user(data: UserLogin, db: Session = Depends(get_db)):
     return {"message": "Sign-in successful!", "user": user_to_dict(user)}
 
 
+@router.get("/{user_id}")
+def get_user(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(Users).filter(Users.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"user": user_to_dict(user)}
 
+def user_to_dict(user):
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "role": getattr(user, "role", 0) if getattr(user, "role", 0) is not None else 0,
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+        "updated_at": user.updated_at.isoformat() if user.updated_at else None,
+    }

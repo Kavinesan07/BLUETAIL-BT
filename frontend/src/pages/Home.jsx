@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import ProductCard from "../components/ProductCard";
 import { CATEGORIES, productService } from "../services/productService";
 
@@ -78,6 +79,8 @@ export default function Home() {
           ))}
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

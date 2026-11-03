@@ -1,7 +1,14 @@
 
+import sys
+from pathlib import Path
 from logging.config import fileConfig
 
 from alembic import context
+
+# Add project root to Python path
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT_ROOT))
+
 from app.database import Base, engine
 from app import models
 
@@ -19,6 +26,7 @@ def run_migrations_offline():
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        compare_type=True,
     )
 
     with context.begin_transaction():
