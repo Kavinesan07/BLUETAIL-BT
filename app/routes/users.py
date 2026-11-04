@@ -17,12 +17,6 @@ class UserCreate(BaseModel):
     role: Optional[int] = 0
 
 
-class UserUpdate(BaseModel):
-    username: Optional[str] = Field(default=None, min_length=2, max_length=100)
-    email: Optional[EmailStr] = None
-    password: Optional[str] = Field(default=None, min_length=6, max_length=72)
-    role: Optional[int] = None
-
 
 class UserLogin(BaseModel):
     email: EmailStr
