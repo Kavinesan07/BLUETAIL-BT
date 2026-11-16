@@ -1,5 +1,5 @@
-﻿import { Routes, Route, Navigate } from "react-router-dom";
-import { ProtectedRoute, GuestRoute } from "./components/RouteGuards";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { ProtectedRoute, GuestRoute, AdminRoute } from "./components/RouteGuards";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
@@ -27,10 +27,14 @@ export default function App() {
       {/* Only logged-in users */}
       <Route element={<ProtectedRoute />}>
         <Route path="/account" element={<Dashboard />} />
-        <Route path="/admin/add-product" element={<AddProduct />} />
         <Route path="/address" element={<Address />} />
         <Route path="/orders" element={<Orders />} />
         <Route path="/payment" element={<Payment />} />
+      </Route>
+
+      {/* Only Admin users (role === 1) */}
+      <Route element={<AdminRoute />}>
+        <Route path="/admin/add-product" element={<AddProduct />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

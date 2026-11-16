@@ -81,6 +81,9 @@ input:focus-visible, button:focus-visible, a:focus-visible {
 
 /* ---------- App shell ---------- */
 .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -100,7 +103,8 @@ input:focus-visible, button:focus-visible, a:focus-visible {
 }
 .ghost:hover { background: #1a3d57; }
 
-.content { max-width: 56rem; margin: 0 auto; padding: 2.5rem 1.5rem; }
+.app-shell { min-height: 100vh; display: flex; flex-direction: column; }
+.content { max-width: 56rem; margin: 0 auto; padding: 2.5rem 1.5rem; width: 100%; flex: 1; }
 .content h1 { margin: 0 0 0.25rem; }
 .empty {
   margin-top: 1.5rem;

@@ -11,7 +11,6 @@ from ..models import Address, Order, OrderItem, Product, Users
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
-
 class OrderLine(BaseModel):
     product_id: int
     quantity: int = Field(gt=0, le=100)

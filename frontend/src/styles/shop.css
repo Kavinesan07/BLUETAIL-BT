@@ -272,3 +272,510 @@
 .details-email { color: var(--muted); }
 .details-text { margin: 0; color: #334155; }
 .details-muted { color: var(--muted); font-style: italic; }
+
+
+/* ---- Navbar Avatar Badge ---- */
+.nav-account {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.nav-avatar {
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+.nav-avatar-fallback {
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 50%;
+  background: var(--tail-dark);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+}
+.nav-username {
+  font-weight: 700;
+}
+
+/* ---- Account / Dashboard Page ---- */
+.account-page {
+  padding-bottom: 3.5rem;
+}
+.account-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+.account-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink);
+  background: #e3effa;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  margin-bottom: 0.35rem;
+}
+.account-title {
+  margin: 0 0 0.25rem;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.logout-top-btn {
+  margin-top: 0;
+  padding: 0.55rem 1.1rem;
+}
+.feedback-banner {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 1.5rem;
+  font-weight: 700;
+  animation: fadeIn 0.25s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.account-layout {
+  display: grid;
+  grid-template-columns: 20rem 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+/* Profile Card */
+.profile-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1.75rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.profile-avatar-container {
+  margin-bottom: 1rem;
+}
+.profile-avatar-frame {
+  position: relative;
+  width: 7rem;
+  height: 7rem;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 4px solid #fff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  background: #f1f5f9;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.profile-avatar-frame:hover {
+  transform: scale(1.03);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+.profile-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.profile-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--ink) 0%, var(--tail-dark) 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  font-weight: 800;
+}
+.avatar-edit-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.profile-avatar-frame:hover .avatar-edit-overlay {
+  opacity: 1;
+}
+
+.profile-user-info h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.35rem;
+}
+.profile-email {
+  margin: 0 0 0.5rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+  word-break: break-all;
+}
+.profile-role {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: #f1f5f9;
+  color: #475569;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+}
+.profile-role.role-admin {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.profile-pic-controls {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+.choose-photo-btn {
+  margin-top: 0;
+  width: 100%;
+}
+.remove-photo-btn {
+  margin-top: 0;
+  width: 100%;
+  color: var(--error-text);
+  border-color: #fca5a5;
+}
+.remove-photo-btn:hover {
+  background: #fef2f2;
+}
+
+.preset-avatars-section {
+  width: 100%;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--line);
+}
+.preset-label {
+  margin: 0 0 0.6rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+.preset-avatar-grid {
+  display: flex;
+  justify-content: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+.preset-avatar-btn {
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 50%;
+  border: 1.5px solid var(--line);
+  font-size: 1.15rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.preset-avatar-btn:hover {
+  transform: scale(1.15);
+  border-color: var(--tail);
+}
+
+.profile-divider {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 1.5rem 0 1.25rem;
+}
+.account-meta-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+}
+.account-meta-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.meta-label {
+  color: var(--muted);
+}
+.meta-value {
+  font-weight: 700;
+}
+.status-active {
+  color: var(--ok-text);
+}
+
+/* Quick Actions Section */
+.account-actions-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.section-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text);
+}
+.actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+.action-card {
+  background: #fff;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 1.35rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.action-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  border-color: var(--tail);
+}
+.action-card.highlight-card {
+  border-color: #cbd5e1;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+.action-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.action-icon-box {
+  width: 3.2rem;
+  height: 3.2rem;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.7rem;
+  flex-shrink: 0;
+}
+.orders-icon { background: #e0f2fe; }
+.address-icon { background: #fef3c7; }
+.cart-icon { background: #ede9fe; }
+.shop-icon { background: #dcfce7; }
+
+.action-card-text h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text);
+}
+.action-card-text p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+.action-card-footer {
+  margin-top: auto;
+}
+.full-btn {
+  width: 100%;
+  text-align: center;
+}
+
+/* Seller / Admin Banner */
+.admin-banner-card {
+  background: #5e6c7a;
+  border: 1.5px dashed var(--line);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+.admin-banner-text strong {
+  display: block;
+  font-size: 0.98rem;
+  margin-bottom: 0.2rem;
+}
+.admin-banner-text p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+/* ---- Modern Footer ---- */
+.footer {
+  background:#02949c;
+  color: #e2e8f0;
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+.footer-top {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 2.5rem;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.3fr;
+  gap: 2.5rem;
+}
+.footer-logo {
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.6rem;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+  display: inline-block;
+}
+.footer-desc {
+  color: #d2deef;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  margin: 0.85rem 0 1.25rem;
+}
+.footer-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.footer-badge {
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: #1e293b;
+  color: #cbd5e1;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.footer-col h3 {
+  color: #ffffff;
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin: 0 0 1rem;
+  letter-spacing: -0.01em;
+}
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+.footer-links a {
+  color: #ced6e1;
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+.footer-links a:hover {
+  color: #38bdf8;
+}
+.footer-contact-item {
+  color: #dde7f5;
+  font-size: 0.92rem;
+  margin: 0.45rem 0;
+  line-height: 1.5;
+}
+.footer-contact-item strong {
+  color: #cbd5e1;
+}
+.footer-hours {
+  color: #f9fbff;
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+}
+.footer-bottom {
+  background: #090d16;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 1.25rem 1.5rem;
+}
+.footer-bottom-inner {
+  max-width: 72rem;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+.footer-bottom-inner p {
+  margin: 0;
+}
+.footer-legal {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.footer-legal a {
+  color: #64748b;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.footer-legal a:hover {
+  color: #94a3b8;
+}
+
+/* Responsive adjustments */
+@media (max-width: 860px) {
+  .account-layout {
+    grid-template-columns: 1fr;
+  }
+  .actions-grid {
+    grid-template-columns: 1fr;
+  }
+  .footer-top {
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .footer-top {
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+  }
+  .account-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

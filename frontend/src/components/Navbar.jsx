@@ -19,8 +19,22 @@ export default function Navbar() {
         {isAuthenticated ? (
           <>
             <NavLink to="/orders" className="nav-link">My orders</NavLink>
-            <NavLink to="/admin/add-product" className="nav-link">Add product</NavLink>
-            <Link to="/account" className="who">{user.username}</Link>
+            
+            {/* Show "Add product" ONLY for Admin users (role === 1) */}
+            {user?.role === 1 && (
+              <NavLink to="/admin/add-product" className="nav-link">Add product</NavLink>
+            )}
+
+            <Link to="/account" className="who nav-account" title="My Account">
+              {user?.avatar ? (
+                <img src={user.avatar} alt={user.username} className="nav-avatar" />
+              ) : (
+                <span className="nav-avatar-fallback">
+                  {user?.username?.charAt(0)?.toUpperCase() || "U"}
+                </span>
+              )}
+              <span className="nav-username">{user?.username}</span>
+            </Link>
             <button className="ghost" onClick={logout}>Log out</button>
           </>
         ) : (
