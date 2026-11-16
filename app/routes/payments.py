@@ -6,7 +6,8 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import Order, Payment
+from ..models import Order, Payment, Users
+from ..auth.dependencies import get_current_user
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
@@ -17,10 +18,16 @@ class PaymentCreate(BaseModel):
 
 
 @router.post("", status_code=201)
-def create_payment(data: PaymentCreate, db: Session = Depends(get_db)):
+def create_payment(
+    data: PaymentCreate,
+    db: Session = Depends(get_db),
+    current_user: Users = Depends(get_current_user),
+):
     order = db.query(Order).filter(Order.id == data.order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
+    if getattr(current_user, "role", 0) != 1 and order.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized for this order")
     if order.status != "pending":
         raise HTTPException(status_code=400, detail="This order is already paid or closed")
 

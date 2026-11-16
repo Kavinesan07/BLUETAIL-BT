@@ -1,22 +1,42 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import ProtectedRoute, { AuthLoading } from "./ProtectedRoute";
 
-// Only logged-in users may see these pages
-export function ProtectedRoute() {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
-}
+export { ProtectedRoute, AuthLoading };
 
-// Only logged-out users may see these pages (login, register)
+// Only logged-out guests may access login and register pages
 export function GuestRoute() {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? <Navigate to="/" replace /> : <Outlet />;
+  const { isAuthenticated, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return <AuthLoading />;
+  }
+
+  if (isAuthenticated) {
+    const destination = location.state?.from?.pathname || "/";
+    return <Navigate to={destination} replace />;
+  }
+
+  return <Outlet />;
 }
 
-// Only admin users (role === 1) may see and access admin pages (e.g. Add Product)
+// Only administrators (role === 1) may access admin pages (e.g. Add Product)
 export function AdminRoute() {
-  const { user, isAuthenticated } = useAuth();
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (user?.role !== 1) return <Navigate to="/" replace />;
+  const { user, isAuthenticated, loading, isAdmin } = useAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return <AuthLoading />;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (!isAdmin && user?.role !== 1) {
+    return <Navigate to="/" replace />;
+  }
+
   return <Outlet />;
 }

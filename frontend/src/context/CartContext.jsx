@@ -34,9 +34,12 @@ export function CartProvider({ children }) {
   }, []);
 
   const setQty = useCallback((id, qty) => {
-    setItems((current) =>
-      current.map((i) => (i.id === id ? { ...i, qty: Math.max(1, qty) } : i))
-    );
+    setItems((current) => {
+      if (qty <= 0) {
+        return current.filter((i) => i.id !== id);
+      }
+      return current.map((i) => (i.id === id ? { ...i, qty } : i));
+    });
   }, []);
 
   const removeItem = useCallback((id) => {

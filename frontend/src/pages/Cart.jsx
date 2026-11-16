@@ -35,7 +35,6 @@ export default function Cart() {
                   <div className="cart-info">
                     <Link to={`/product/${i.id}`} className="card-title">{i.name}</Link>
                     <p className="price">{formatPrice(i.price)}</p>
-                    <button className="link-danger" onClick={() => removeItem(i.id)}>Remove</button>
                   </div>
 
                   <div className="qty-box">

@@ -1,11 +1,14 @@
 import bcrypt
 from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models import Users
+from ..auth.jwt_handler import create_access_token
+from ..auth.dependencies import get_current_user
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -17,10 +20,20 @@ class UserCreate(BaseModel):
     role: Optional[int] = 0
 
 
-
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+
+def user_to_dict(user: Users) -> dict:
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "role": getattr(user, "role", 0) if getattr(user, "role", 0) is not None else 0,
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+        "updated_at": user.updated_at.isoformat() if user.updated_at else None,
+    }
 
 
 def hash_password(password: str) -> str:
@@ -30,7 +43,10 @@ def hash_password(password: str) -> str:
 @router.post("/create", status_code=201)
 def create_user(data: UserCreate, db: Session = Depends(get_db)):
     if db.query(Users).filter(Users.email == data.email).first():
-        raise HTTPException(status_code=409, detail="User already exists")
+        raise HTTPException(
+            status_code=409,
+            detail="User already exists"
+        )
 
     user = Users(
         username=data.username,
@@ -38,40 +54,87 @@ def create_user(data: UserCreate, db: Session = Depends(get_db)):
         hashed_password=hash_password(data.password),
         role=data.role if data.role is not None else 0,
     )
+
     try:
         db.add(user)
         db.commit()
         db.refresh(user)
     except Exception:
         db.rollback()
-        raise HTTPException(status_code=500, detail="Could not create user")
+        raise HTTPException(
+            status_code=500,
+            detail="Could not create user"
+        )
 
-    return {"message": "User created successfully!", "user": user_to_dict(user)}
+    access_token = create_access_token(
+        user_id=user.id,
+        role=user.role,
+        email=user.email,
+    )
+
+    return {
+        "message": "User created successfully!",
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": user_to_dict(user),
+    }
 
 
 @router.post("/login")
 def login_user(data: UserLogin, db: Session = Depends(get_db)):
     user = db.query(Users).filter(Users.email == data.email).first()
 
-    if not user or not bcrypt.checkpw(data.password.encode(), user.hashed_password.encode()):
-        raise HTTPException(status_code=401, detail="Invalid email or password.")
+    if not user or not bcrypt.checkpw(
+        data.password.encode(),
+        user.hashed_password.encode(),
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid email or password.",
+        )
 
-    return {"message": "Sign-in successful!", "user": user_to_dict(user)}
+    access_token = create_access_token(
+        user_id=user.id,
+        role=user.role,
+        email=user.email,
+    )
+
+    return {
+        "message": "Sign-in successful!",
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": user_to_dict(user),
+    }
+
+
+@router.get("/me")
+def get_my_profile(current_user: Users = Depends(get_current_user)):
+    """Verifies JWT bearer token and returns the authenticated user profile."""
+    return {
+        "user": user_to_dict(current_user),
+    }
 
 
 @router.get("/{user_id}")
-def get_user(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(Users).filter(Users.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return {"user": user_to_dict(user)}
+def get_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: Users = Depends(get_current_user),
+):
+    if current_user.id != user_id and getattr(current_user, "role", 0) != 1:
+        raise HTTPException(
+            status_code=403,
+            detail="You are not authorized to view this user profile",
+        )
 
-def user_to_dict(user):
+    user = db.query(Users).filter(Users.id == user_id).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+
     return {
-        "id": user.id,
-        "username": user.username,
-        "email": user.email,
-        "role": getattr(user, "role", 0) if getattr(user, "role", 0) is not None else 0,
-        "created_at": user.created_at.isoformat() if user.created_at else None,
-        "updated_at": user.updated_at.isoformat() if user.updated_at else None,
+        "user": user_to_dict(user),
     }

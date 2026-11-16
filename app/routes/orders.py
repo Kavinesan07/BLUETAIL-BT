@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models import Address, Order, OrderItem, Product, Users
+from ..auth.dependencies import get_current_user
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
@@ -68,19 +69,23 @@ def order_to_dict(order: Order, address=None, user=None) -> dict:
 
 
 @router.post("/create", status_code=201)
-def create_order(data: OrderCreate, db: Session = Depends(get_db)):
-   
+def create_order(
+    data: OrderCreate,
+    db: Session = Depends(get_db),
+    current_user: Users = Depends(get_current_user),
+):
+    effective_user_id = current_user.id if getattr(current_user, "role", 0) != 1 else data.user_id
+
     address = (
         db.query(Address)
-        .filter(Address.id == data.address_id, Address.user_id == data.user_id)
+        .filter(Address.id == data.address_id, Address.user_id == effective_user_id)
         .first()
     )
     if not address:
-        raise HTTPException(status_code=404, detail="Address not found")
+        raise HTTPException(status_code=404, detail="Address not found for this user")
 
-    user = db.query(Users).filter(Users.id == data.user_id).first()
+    user = db.query(Users).filter(Users.id == effective_user_id).first()
 
-  
     wanted: dict[int, int] = {}
     for line in data.items:
         wanted[line.product_id] = wanted.get(line.product_id, 0) + line.quantity
@@ -93,7 +98,7 @@ def create_order(data: OrderCreate, db: Session = Depends(get_db)):
     by_id = {p.id: p for p in products}
 
     order = Order(
-        user_id=data.user_id,
+        user_id=effective_user_id,
         address_id=data.address_id,
         status="pending",
         total_amount=Decimal("0"),
@@ -144,10 +149,17 @@ def create_order(data: OrderCreate, db: Session = Depends(get_db)):
 
 @router.get("")
 @router.get("/all")
-def list_orders(user_id: Optional[int] = None, db: Session = Depends(get_db)):
+def list_orders(
+    user_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+    current_user: Users = Depends(get_current_user),
+):
     query = db.query(Order)
-    if user_id is not None:
+    if getattr(current_user, "role", 0) != 1:
+        query = query.filter(Order.user_id == current_user.id)
+    elif user_id is not None:
         query = query.filter(Order.user_id == user_id)
+
     orders = query.order_by(Order.id.desc()).all()
 
     address_ids = [o.address_id for o in orders if o.address_id]
@@ -160,10 +172,18 @@ def list_orders(user_id: Optional[int] = None, db: Session = Depends(get_db)):
 
 
 @router.get("/{order_id}")
-def get_order(order_id: int, db: Session = Depends(get_db)):
+def get_order(
+    order_id: int,
+    db: Session = Depends(get_db),
+    current_user: Users = Depends(get_current_user),
+):
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
+
+    if getattr(current_user, "role", 0) != 1 and order.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to view this order")
+
     address = db.query(Address).filter(Address.id == order.address_id).first()
     user = db.query(Users).filter(Users.id == order.user_id).first()
     return order_to_dict(order, address, user)
