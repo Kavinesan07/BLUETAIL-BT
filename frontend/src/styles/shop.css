@@ -1,6 +1,7 @@
 .content.wide { max-width: 72rem; }
 
 .topbar .logo { color: #fff; text-decoration: none; }
+.topbar .logo-brand { text-decoration: none; display: inline-flex; align-items: center; }
 .nav-link { color: #b9cfe2; text-decoration: none; font-weight: 700; }
 .nav-link:hover, .nav-link.active { color: #fff; }
 .who { text-decoration: none; }
@@ -662,6 +663,18 @@
   letter-spacing: -0.02em;
   text-decoration: none;
   display: inline-block;
+}
+.footer-logo-img {
+  height: 48px;
+  width: auto;
+  max-width: 190px;
+  object-fit: contain;
+  display: block;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.footer-logo:hover .footer-logo-img {
+  transform: scale(1.03);
+  opacity: 0.95;
 }
 .footer-desc {
   color: #d2deef;

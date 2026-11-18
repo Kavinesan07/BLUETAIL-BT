@@ -10,7 +10,7 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 ENV_FILE = BASE_DIR / ".env"
 load_dotenv(ENV_FILE)
 
-SECRET_KEY = os.getenv("JWT_SECRET_KEY") or "bluetail_jwt_secure_super_secret_key_2026_x89f"
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "10080"))  # default 7 days
 
@@ -19,6 +19,7 @@ def create_access_token(
     user_id: int,
     role: int = 0,
     email: str | None = None,
+    username: str | None = None,
     expires_delta: timedelta | None = None,
 ) -> str:
     now = datetime.now(timezone.utc)
@@ -34,6 +35,8 @@ def create_access_token(
     }
     if email:
         payload["email"] = email
+    if username:
+        payload["username"] = username
 
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 

@@ -88,7 +88,6 @@ class Payment(Base):
             "status IN ('pending','paid','failed','refunded')",
             name="ck_payments_status",
         ),
-        # MSSQL allows only one NULL in a normal unique column, so use a filtered index
         Index(
             "ux_payments_transaction_id",
             "transaction_id",
@@ -106,8 +105,8 @@ class Payment(Base):
     method = Column(String(20), nullable=False)
     status = Column(String(20), nullable=False, default="pending")
 
-    transaction_id = Column(String(100), nullable=True)   # reference from the payment gateway
-    card_last4 = Column(String(4), nullable=True)         # last 4 digits only, never the full number
+    transaction_id = Column(String(100), nullable=True)   
+    card_last4 = Column(String(4), nullable=True)        
     failure_reason = Column(String(200), nullable=True)
 
     paid_at = Column(DateTime(timezone=True), nullable=True)
@@ -115,3 +114,97 @@ class Payment(Base):
     updated_at = Column(DateTime(timezone=True), nullable=False, default=utc_now, onupdate=utc_now)
 
     order = relationship("Order", back_populates="payments")
+
+
+
+class PasswordResetToken(Base):
+    __tablename__ = "password_reset_tokens"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+
+    token_hash = Column(
+        String(64),
+        unique=True,
+        nullable=False
+    )
+
+    expires_at = Column(
+        DateTime(timezone=True),
+        nullable=False
+    )
+
+    used_at = Column(
+        DateTime(timezone=True),
+        nullable=True,
+        default=None
+    )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=utc_now
+    )
+
+    __table_args__ = (
+        Index(
+            "ix_password_reset_user_used",
+            "user_id",
+            "used_at"
+        ),
+    )
+
+
+class EmailVerificationToken(Base):
+    __tablename__ = "email_verification_tokens"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    email = Column(
+        String(100),
+        nullable=False,
+        index=True
+    )
+
+    otp_hash = Column(
+        String(64),
+        nullable=False
+    )
+
+    expires_at = Column(
+        DateTime(timezone=True),
+        nullable=False
+    )
+
+    used_at = Column(
+        DateTime(timezone=True),
+        nullable=True,
+        default=None
+    )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=utc_now
+    )
+
+    __table_args__ = (
+        Index(
+            "ix_email_verif_email_used",
+            "email",
+            "used_at"
+        ),
+    )

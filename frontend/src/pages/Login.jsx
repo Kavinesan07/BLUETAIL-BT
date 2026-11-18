@@ -75,6 +75,15 @@ export default function Login() {
           error={errors.password}
         />
 
+        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.4rem" }}>
+          <Link
+            to="/forgot-password"
+            style={{ fontSize: "0.85rem", color: "var(--tail, #0284c7)", textDecoration: "none" }}
+          >
+            Forgot password?
+          </Link>
+        </div>
+
         <button className="primary" type="submit" disabled={loading}>
           {loading ? "Logging in..." : "Log in"}
         </button>
