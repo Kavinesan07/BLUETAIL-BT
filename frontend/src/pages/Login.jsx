@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import AuthLayout from "../components/AuthLayout";
 import FormField from "../components/FormField";
 
+
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -35,7 +36,8 @@ export default function Login() {
     setLoading(true);
     try {
       await login(form.email.trim(), form.password);
-      navigate("/", { replace: true });
+      const destination = location.state?.from?.pathname || "/account";
+      navigate(destination, { replace: true });
     } catch (err) {
       setServerError(err.message);
     } finally {

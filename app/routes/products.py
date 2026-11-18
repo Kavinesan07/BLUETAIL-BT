@@ -6,7 +6,8 @@ from pydantic import BaseModel, ConfigDict
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Product
+from app.models import Product, Users
+from app.auth.dependencies import get_current_admin
 
 router = APIRouter(prefix="/products", tags=["products"])
 
@@ -60,6 +61,7 @@ async def create_product(
     description: str = Form(""),
     image: UploadFile = File(...),
     db: Session = Depends(get_db),
+    admin: Users = Depends(get_current_admin),
 ):
     if image.content_type not in ALLOWED_TYPES:
         raise HTTPException(status_code=400, detail="Only JPG, PNG or WEBP images are allowed")
@@ -85,7 +87,11 @@ async def create_product(
 
 
 @router.delete("/{product_id}", status_code=204)
-def delete_product(product_id: int, db: Session = Depends(get_db)):
+def delete_product(
+    product_id: int,
+    db: Session = Depends(get_db),
+    admin: Users = Depends(get_current_admin),
+):
     product = (
         db.query(Product)
         .filter(Product.id == product_id, Product.is_deleted == False)

@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models import Address, Users
+from ..auth.dependencies import get_current_user
 
 router = APIRouter(prefix="/address", tags=["address"])
 
@@ -25,13 +26,18 @@ class AddressOut(AddressCreate):
 
 
 @router.post("/create", response_model=AddressOut, status_code=201)
-def create_address(address: AddressCreate, db: Session = Depends(get_db)):
-    user = db.query(Users).filter(Users.id == address.user_id).first()
+def create_address(
+    address: AddressCreate,
+    db: Session = Depends(get_db),
+    current_user: Users = Depends(get_current_user),
+):
+    target_user_id = current_user.id if getattr(current_user, "role", 0) != 1 else address.user_id
+    user = db.query(Users).filter(Users.id == target_user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
     new_address = Address(
-        user_id=address.user_id,
+        user_id=target_user_id,
         street=address.street,
         city=address.city,
         state=address.state,

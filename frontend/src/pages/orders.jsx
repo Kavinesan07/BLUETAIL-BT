@@ -159,22 +159,24 @@ export default function Orders() {
       <main className="content wide">
         <div className="orders-header-row">
           <h1>{viewAll ? "All orders" : "My orders"}</h1>
-          <div className="filter-tabs">
-            <button
-              type="button"
-              className={`tab-btn ${!viewAll ? "active" : ""}`}
-              onClick={() => setViewAll(false)}
-            >
-              My orders
-            </button>
-            <button
-              type="button"
-              className={`tab-btn ${viewAll ? "active" : ""}`}
-              onClick={() => setViewAll(true)}
-            >
-              All orders
-            </button>
-          </div>
+          {user?.role === 1 && (
+            <div className="filter-tabs">
+              <button
+                type="button"
+                className={`tab-btn ${!viewAll ? "active" : ""}`}
+                onClick={() => setViewAll(false)}
+              >
+                My orders
+              </button>
+              <button
+                type="button"
+                className={`tab-btn ${viewAll ? "active" : ""}`}
+                onClick={() => setViewAll(true)}
+              >
+                All orders
+              </button>
+            </div>
+          )}
         </div>
 
         {paidOrder && (

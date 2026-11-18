@@ -1,10 +1,16 @@
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const { count } = useCart();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
 
   return (
     <header className="topbar">
@@ -35,7 +41,7 @@ export default function Navbar() {
               )}
               <span className="nav-username">{user?.username}</span>
             </Link>
-            <button className="ghost" onClick={logout}>Log out</button>
+            <button className="ghost" onClick={handleLogout}>Log out</button>
           </>
         ) : (
           <>

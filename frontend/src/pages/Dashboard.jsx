@@ -138,7 +138,7 @@ export default function Dashboard() {
             onClick={() => {
               if (window.confirm("Are you sure you want to log out?")) {
                 logout();
-                navigate("/");
+                navigate("/login", { replace: true });
               }
             }}
           >
