@@ -17,6 +17,22 @@ class Users(Base):
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc),onupdate=lambda: datetime.now(timezone.utc))
 
+    shops = relationship("Shop", back_populates="owner", cascade="all, delete-orphan")
+
+class Shop(Base):
+    __tablename__ = "shops"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), nullable=False)
+    description = Column(Text, default="", nullable=True)
+    owner_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+
+    owner = relationship("Users", back_populates="shops")
+    products = relationship("Product", back_populates="shop")
+
 class Product(Base):
     __tablename__ = "products"
 
@@ -28,6 +44,9 @@ class Product(Base):
     category = Column(String(100), nullable=False)
     image_url = Column(String(300), nullable=True)
     is_deleted = Column(Boolean, default=False, nullable=False)
+    shop_id = Column(Integer, ForeignKey("shops.id", ondelete="SET NULL"), nullable=True, index=True)
+
+    shop = relationship("Shop", back_populates="products")
 
 class Address(Base):
     __tablename__="Address"

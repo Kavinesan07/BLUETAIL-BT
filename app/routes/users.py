@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models import Users, PasswordResetToken, EmailVerificationToken
 from ..auth.jwt_handler import create_access_token
-from ..auth.dependencies import get_current_user
+from ..auth.dependencies import get_current_user, require_super_admin, ROLE_SUPER_ADMIN
 from ..auth.password_reset import (
     generate_otp,
     hash_reset_token,
@@ -212,13 +212,27 @@ def get_my_profile(current_user: Users = Depends(get_current_user)):
     }
 
 
+class UserRoleUpdate(BaseModel):
+    role: int = Field(ge=0, le=2)
+
+
+@router.get("", response_model=list[dict])
+def list_users(
+    db: Session = Depends(get_db),
+    admin: Users = Depends(require_super_admin),
+):
+    """Super Admin only: View all registered users and their roles."""
+    users = db.query(Users).order_by(Users.id.asc()).all()
+    return [user_to_dict(u) for u in users]
+
+
 @router.get("/{user_id}")
 def get_user(
     user_id: int,
     db: Session = Depends(get_db),
     current_user: Users = Depends(get_current_user),
 ):
-    if current_user.id != user_id and getattr(current_user, "role", 0) != 1:
+    if current_user.id != user_id and getattr(current_user, "role", 0) != ROLE_SUPER_ADMIN:
         raise HTTPException(
             status_code=403,
             detail="You are not authorized to view this user profile",
@@ -233,6 +247,29 @@ def get_user(
         )
 
     return {
+        "user": user_to_dict(user),
+    }
+
+
+@router.put("/{user_id}/role")
+def update_user_role(
+    user_id: int,
+    data: UserRoleUpdate,
+    db: Session = Depends(get_db),
+    admin: Users = Depends(require_super_admin),
+):
+    """Super Admin only: Promote or update a user's role (0=Customer, 1=Shop Owner, 2=Super Admin)."""
+    user = db.query(Users).filter(Users.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.role = data.role
+    user.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(user)
+
+    return {
+        "message": f"User {user.username} role updated to {data.role}",
         "user": user_to_dict(user),
     }
 
@@ -261,7 +298,7 @@ async def forgot_password(data: ForgotPasswordRequest, db: Session = Depends(get
         }
 
     now = datetime.now(timezone.utc)
-    # Invalidate previous unused reset tokens for this user
+ 
     db.query(PasswordResetToken).filter(
         PasswordResetToken.user_id == user.id,
         PasswordResetToken.used_at == None,
@@ -287,6 +324,7 @@ async def forgot_password(data: ForgotPasswordRequest, db: Session = Depends(get
         "message": "Password reset OTP has been sent to your email.",
     }
     if os.getenv("SMTP_USER") == "inga than mail varum" or not os.getenv("SMTP_HOST"):
+        response["fill_otp"] = otp
         response["dev_otp"] = otp
 
     return response

@@ -33,7 +33,7 @@ def create_access_token(
         "iat": now,
         "exp": expire,
     }
-    if email:
+    if email: 
         payload["email"] = email
     if username:
         payload["username"] = username

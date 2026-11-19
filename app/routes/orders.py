@@ -7,8 +7,16 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import Address, Order, OrderItem, Product, Users
-from ..auth.dependencies import get_current_user
+from ..models import Address, Order, OrderItem, Product, Users, Shop
+from ..auth.dependencies import (
+    get_current_user,
+    require_shop_owner,
+    require_super_admin,
+    get_or_create_user_shop,
+    ROLE_SUPER_ADMIN,
+    ROLE_SHOP_OWNER,
+    ROLE_CUSTOMER,
+)
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
@@ -147,18 +155,42 @@ def create_order(
     return order_to_dict(order, address, user)
 
 
+class OrderStatusUpdate(BaseModel):
+    status: str = Field(pattern="^(pending|confirmed|shipped|delivered|cancelled)$")
+
+
 @router.get("")
 @router.get("/all")
 def list_orders(
     user_id: Optional[int] = None,
+    shop_id: Optional[int] = None,
     db: Session = Depends(get_db),
     current_user: Users = Depends(get_current_user),
 ):
+    """
+    List orders based on RBAC:
+    - Super Admin (role=2): Can view ALL orders across all shops (with optional user_id/shop_id filters).
+    - Shop Owner (role=1): Can view orders containing products from their shop OR their own placed orders.
+    - Customer (role=0): Can view ONLY their own orders.
+    """
     query = db.query(Order)
-    if getattr(current_user, "role", 0) != 1:
+    user_role = getattr(current_user, "role", 0)
+
+    if user_role == ROLE_SUPER_ADMIN:
+        if user_id is not None:
+            query = query.filter(Order.user_id == user_id)
+        if shop_id is not None:
+            shop_prod_ids = db.query(Product.id).filter(Product.shop_id == shop_id).subquery()
+            shop_order_ids = db.query(OrderItem.order_id).filter(OrderItem.product_id.in_(shop_prod_ids)).subquery()
+            query = query.filter(Order.id.in_(shop_order_ids))
+    elif user_role == ROLE_SHOP_OWNER:
+        user_shop = get_or_create_user_shop(current_user, db)
+        shop_prod_ids = db.query(Product.id).filter(Product.shop_id == user_shop.id).subquery()
+        shop_order_ids = db.query(OrderItem.order_id).filter(OrderItem.product_id.in_(shop_prod_ids)).subquery()
+        query = query.filter((Order.id.in_(shop_order_ids)) | (Order.user_id == current_user.id))
+    else:
+        # Customer (Role 0)
         query = query.filter(Order.user_id == current_user.id)
-    elif user_id is not None:
-        query = query.filter(Order.user_id == user_id)
 
     orders = query.order_by(Order.id.desc()).all()
 
@@ -177,13 +209,65 @@ def get_order(
     db: Session = Depends(get_db),
     current_user: Users = Depends(get_current_user),
 ):
+    """
+    Get order details:
+    - Super Admin: Can view any order.
+    - Shop Owner: Can view if customer is themselves OR if order contains their shop's items.
+    - Customer: Can view ONLY their own orders (403 for others).
+    """
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
-    if getattr(current_user, "role", 0) != 1 and order.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to view this order")
+    user_role = getattr(current_user, "role", 0)
+
+    if user_role == ROLE_SUPER_ADMIN:
+        pass
+    elif user_role == ROLE_SHOP_OWNER:
+        user_shop = get_or_create_user_shop(current_user, db)
+        shop_prod_ids = [p[0] for p in db.query(Product.id).filter(Product.shop_id == user_shop.id).all()]
+        order_has_shop_item = any(item.product_id in shop_prod_ids for item in order.items)
+        if order.user_id != current_user.id and not order_has_shop_item:
+            raise HTTPException(status_code=403, detail="Not authorized to view this order")
+    else:
+        # Customer (Role 0)
+        if order.user_id != current_user.id:
+            raise HTTPException(status_code=403, detail="Not authorized to view this order")
 
     address = db.query(Address).filter(Address.id == order.address_id).first()
     user = db.query(Users).filter(Users.id == order.user_id).first()
     return order_to_dict(order, address, user)
+
+
+@router.put("/{order_id}/status")
+def update_order_status(
+    order_id: int,
+    data: OrderStatusUpdate,
+    db: Session = Depends(get_db),
+    current_user: Users = Depends(require_shop_owner),
+):
+    """
+    Update order status:
+    - Super Admin: Can update status of any order.
+    - Shop Owner: Can update status of orders containing items from their shop.
+    - Customer: Cannot update (403).
+    """
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    user_role = getattr(current_user, "role", 0)
+    if user_role != ROLE_SUPER_ADMIN:
+        user_shop = get_or_create_user_shop(current_user, db)
+        shop_prod_ids = [p[0] for p in db.query(Product.id).filter(Product.shop_id == user_shop.id).all()]
+        order_has_shop_item = any(item.product_id in shop_prod_ids for item in order.items)
+        if not order_has_shop_item:
+            raise HTTPException(status_code=403, detail="Not authorized to update status for this order")
+
+    order.status = data.status
+    db.commit()
+    db.refresh(order)
+    return {
+        "message": f"Order status updated to {order.status}",
+        "order": order_to_dict(order),
+    }

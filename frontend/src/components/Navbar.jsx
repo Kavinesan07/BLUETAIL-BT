@@ -29,8 +29,8 @@ export default function Navbar() {
           <>
             <NavLink to="/orders" className="nav-link">My orders</NavLink>
             
-            {/* Show "Add product" ONLY for Admin users (role === 1) */}
-            {user?.role === 1 && (
+            {/* Show "Add product" for Shop Owners (role 1) and Super Admin (role 2) */}
+            {(user?.role === 1 || user?.role === 2) && (
               <NavLink to="/admin/add-product" className="nav-link">Add product</NavLink>
             )}
 
