@@ -79,6 +79,47 @@ def list_manage_products(
     return query.order_by(Product.id.desc()).all()
 
 
+@router.get("/my-products", response_model=list[ProductOut])
+def list_my_products(
+    shop_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+    current_user: Users = Depends(require_shop_owner),
+):
+    """
+    Dedicated endpoint for Shop Owners to retrieve their own shop's products.
+    """
+    return list_manage_products(shop_id=shop_id, db=db, current_user=current_user)
+
+
+class StockUpdate(BaseModel):
+    stock: int
+
+
+@router.patch("/{product_id}/stock", response_model=ProductOut)
+def update_product_stock(
+    product_id: int,
+    payload: StockUpdate,
+    db: Session = Depends(get_db),
+    current_user: Users = Depends(require_shop_owner),
+):
+    """
+    Quick stock update:
+    - Shop Owner (role=1): verified via verify_product_ownership (own shop only).
+    - Super Admin (role=2): verified via verify_product_ownership (any shop).
+    """
+    product = verify_product_ownership(product_id, current_user, db)
+    if payload.stock < 0:
+        raise HTTPException(status_code=400, detail="Stock cannot be negative")
+    product.stock = payload.stock
+    try:
+        db.commit()
+        db.refresh(product)
+        return product
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Could not update product stock")
+
+
 @router.get("/{product_id}", response_model=ProductOut)
 def get_product(product_id: int, db: Session = Depends(get_db)):
     """Public single product details."""

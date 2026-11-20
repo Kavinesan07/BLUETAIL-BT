@@ -31,19 +31,56 @@ export default function Home() {
 
   return (
     <div className="app-shell">
-      <Navbar />
+      <div className="christmas-header">
+        <video
+          className="christmas-video"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          ref={(video) => {
+            if (video) {
+              video.muted = true;
+              video.defaultMuted = true;
+              const p = video.play();
+              if (p !== undefined) {
+                p.catch(() => {});
+              }
+            }
+          }}
+        >
+          <source
+            src="/Santa_sleigh_animation_in_winter_1080p.mp4"
+            type="video/mp4"
+          />
+          Your browser does not support the video tag.
+        </video>
 
-      <section className="hero">
-        <h1>Welcome to Winter and Summer</h1>
-        <input
-          className="search"
-          type="search"
-          placeholder="Something waiting for you ...."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          aria-label="Search products"
-        />
-      </section>
+        <div className="header-content">
+          <Navbar />
+
+          <section className="hero">
+            <h1>Welcome to Winter and Summer</h1>
+            <div className="search-wrap">
+              <input
+                className="search"
+                type="search"
+                placeholder="Search for products, brands..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                aria-label="Search products"
+              />
+              <span className="search-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+              </span>
+            </div>
+          </section>
+        </div>
+      </div>
 
       <main className="content wide">
         <div className="chips">

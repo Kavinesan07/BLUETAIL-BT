@@ -1,10 +1,14 @@
 import { api } from "./api";
 
 export const productService = {
-  list: () => api.get("/products"),
+  list: (shopId) => api.get(shopId ? `/products?shop_id=${shopId}` : "/products"),
+  myProducts: () => api.get("/products/my-products"),
+  getMyShop: () => api.get("/shops/my-shop"),
   get: (id) => api.get(`/products/${id}`),
   // formData contains: name, price, category, stock, description, image (file)
   create: (formData) => api.post("/products", formData),
+  update: (id, formData) => api.put(`/products/${id}`, formData),
+  updateStock: (id, stock) => api.patch(`/products/${id}/stock`, { stock }),
   remove: (id) => api.delete(`/products/${id}`),
 };
 

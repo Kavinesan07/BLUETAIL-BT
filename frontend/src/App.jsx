@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import AddProduct from "./pages/AddProduct";
+import MyProducts from "./pages/MyProducts";
 import Address from "./pages/Address";
 import Payment from "./pages/payment";
 import Orders from "./pages/orders";
@@ -34,8 +35,10 @@ export default function App() {
         <Route path="/payment" element={<Payment />} />
       </Route>
 
-      {/* Only Admin users (role === 1) */}
+      {/* Only Shop Owner & Admin users (role === 1 or 2) */}
       <Route element={<AdminRoute />}>
+        <Route path="/admin/products" element={<MyProducts />} />
+        <Route path="/my-products" element={<Navigate to="/admin/products" replace />} />
         <Route path="/admin/add-product" element={<AddProduct />} />
       </Route>
 

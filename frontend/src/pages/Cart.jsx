@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import { useCart } from "../context/CartContext";
 import { imageUrl } from "../services/api";
 import { formatPrice } from "../services/productService";
@@ -62,6 +63,7 @@ export default function Cart() {
           </div>
         )}
       </main>
+      <Footer />
     </div>
   );
 }

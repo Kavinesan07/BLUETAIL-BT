@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { imageUrl } from "../services/api";
@@ -254,6 +255,7 @@ export default function Orders() {
           ))}
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

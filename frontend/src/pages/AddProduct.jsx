@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import FormField from "../components/FormField";
 import { CATEGORIES, productService } from "../services/productService";
 
@@ -125,6 +126,7 @@ export default function AddProduct() {
           </button>
         </form>
       </main>
+      <Footer />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { imageUrl } from "../services/api";
@@ -9,13 +10,11 @@ import { formatPrice, productService } from "../services/productService";
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addItem, removeItem } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { addItem } = useCart();
 
   const [product, setProduct] = useState(null);
   const [error, setError] = useState("");
   const [qty, setQty] = useState(1);
-  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     productService
@@ -23,20 +22,6 @@ export default function ProductDetail() {
       .then(setProduct)
       .catch((err) => setError(err.message));
   }, [id]);
-
-  async function handleDelete() {
-    if (!window.confirm(`Delete "${product.name}"? This cannot be undone.`)) return;
-
-    setDeleting(true);
-    try {
-      await productService.remove(product.id);
-      removeItem(product.id);               // also remove it from the cart
-      navigate("/", { replace: true });     // go back to the shop
-    } catch (err) {
-      setError(err.message);
-      setDeleting(false);
-    }
-  }
 
   return (
     <div className="app-shell">
@@ -99,16 +84,11 @@ export default function ProductDetail() {
                   </button>
                 </div>
               )}
-
-              {isAuthenticated && (
-                <button className="danger wide-danger" onClick={handleDelete} disabled={deleting}>
-                  {deleting ? "Deleting..." : "Delete this product"}
-                </button>
-              )}
             </div>
           </div>
         )}
       </main>
+      <Footer />
     </div>
   );
 }

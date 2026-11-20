@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import { useAuth } from "../context/AuthContext";
 import { formatPrice } from "../services/productService";
 import { orderService } from "../services/orderService";
@@ -142,6 +143,7 @@ export default function Payment() {
           </aside>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

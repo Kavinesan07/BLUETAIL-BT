@@ -21,7 +21,7 @@ export function GuestRoute() {
   return <Outlet />;
 }
 
-// Only administrators (role === 1) may access admin pages (e.g. Add Product)
+// Only Shop Owners (role === 1) and Super Admins (role === 2) may access admin/owner pages
 export function AdminRoute() {
   const { user, isAuthenticated, loading, isAdmin } = useAuth();
   const location = useLocation();
@@ -34,7 +34,8 @@ export function AdminRoute() {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (!isAdmin && user?.role !== 1) {
+  const role = Number(user?.role);
+  if (role !== 1 && role !== 2 && !isAdmin) {
     return <Navigate to="/" replace />;
   }
 

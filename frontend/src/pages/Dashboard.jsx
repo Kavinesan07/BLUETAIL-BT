@@ -191,8 +191,8 @@ export default function Dashboard() {
             <div className="profile-user-info">
               <h2>{user?.username || "Valued Customer"}</h2>
               <p className="profile-email">{user?.email}</p>
-              <span className={`profile-role ${user?.role === 1 ? "role-admin" : "role-customer"}`}>
-                {user?.role === 1 ? "👑 Administrator" : "Customer Member"}
+              <span className={`profile-role ${user?.role === 2 ? "role-admin" : user?.role === 1 ? "role-admin" : "role-customer"}`}>
+                {user?.role === 2 ? "⚡ Super Admin" : user?.role === 1 ? "🏪 Shop Owner" : "Customer Member"}
               </span>
             </div>
 
@@ -246,7 +246,7 @@ export default function Dashboard() {
               </div>
               <div className="account-meta-item">
                 <span className="meta-label">Role:</span>
-                <span className="meta-value">{user?.role === 1 ? "Admin (Role 1)" : "User (Role 0)"}</span>
+                <span className="meta-value">{user?.role === 2 ? "Super Admin (Role 2)" : user?.role === 1 ? "Shop Owner (Role 1)" : "Customer (Role 0)"}</span>
               </div>
               <div className="account-meta-item">
                 <span className="meta-label">Status:</span>
@@ -377,16 +377,21 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Seller/Admin Action: only accessible if user role is 1 */}
-            {user?.role === 1 && (
+            {/* Shop Owner / Admin Portal: accessible if user role is 1 or 2 */}
+            {(user?.role === 1 || user?.role === 2) && (
               <div className="admin-banner-card">
                 <div className="admin-banner-text">
-                  <strong>Admin Portal: Manage Catalog</strong>
-                  <p>Add new toy models, pricing, stock levels, and pictures.</p>
+                  <strong>Shop Owner Portal: Product Management</strong>
+                  <p>View your shop's inventory, edit details, adjust stock levels, and add new products.</p>
                 </div>
-                <Link to="/admin/add-product" className="primary small link-btn">
-                  + Add Product
-                </Link>
+                <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
+                  <Link to="/admin/products" className="primary small link-btn">
+                    📦 My Products
+                  </Link>
+                  <Link to="/admin/add-product" className="ghost dark small link-btn">
+                    + Add Product
+                  </Link>
+                </div>
               </div>
             )}
           </section>

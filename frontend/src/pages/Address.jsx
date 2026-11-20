@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import FormField from "../components/FormField";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
@@ -138,6 +139,7 @@ export default function Address() {
           </button>
         </form>
       </main>
+      <Footer />
     </div>
   );
 }
