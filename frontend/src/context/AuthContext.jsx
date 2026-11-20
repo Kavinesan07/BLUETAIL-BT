@@ -5,10 +5,23 @@ import { auth } from "../services/api";
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  // Always initialize user as null and loading as true on fresh mount
-  // Never treat a stored object as proof of authentication before backend verification
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Synchronously seed user from the verified JWT token in sessionStorage (if valid)
+  // No user JSON payload is stored in sessionStorage; user data is extracted from the JWT
+  const [user, setUser] = useState(() => {
+    const token = auth.getToken();
+    if (!token) return null;
+    const tokenUser = auth.getUser();
+    if (!tokenUser) return null;
+    const existingAvatar =
+      (tokenUser.id ? localStorage.getItem(`bluetail_avatar_${tokenUser.id}`) : null) ||
+      (tokenUser.email ? localStorage.getItem(`bluetail_avatar_${tokenUser.email}`) : null);
+    return { ...tokenUser, avatar: existingAvatar || null };
+  });
+
+  const [loading, setLoading] = useState(() => {
+    const token = auth.getToken();
+    return !!token;
+  });
 
   // Validate JWT on mount through protected backend endpoint /users/me
   useEffect(() => {
@@ -33,18 +46,19 @@ export function AuthProvider({ children }) {
             (u.id ? localStorage.getItem(`bluetail_avatar_${u.id}`) : null) ||
             (u.email ? localStorage.getItem(`bluetail_avatar_${u.email}`) : null);
           const verifiedUser = { ...u, avatar: existingAvatar || u.avatar || null };
-          auth.setUser(verifiedUser);
           setUser(verifiedUser);
         } else {
           auth.removeToken();
           setUser(null);
         }
       })
-      .catch(() => {
+      .catch((err) => {
         if (!isMounted) return;
-        // On 401 or any verification failure, purge session credentials completely
-        auth.removeToken();
-        setUser(null);
+        // If 401 Unauthorized (token invalid, expired, or user deleted), purge session
+        if (err?.status === 401) {
+          auth.removeToken();
+          setUser(null);
+        }
       })
       .finally(() => {
         if (isMounted) {
@@ -68,7 +82,6 @@ export function AuthProvider({ children }) {
         (data.user?.id ? localStorage.getItem(`bluetail_avatar_${data.user.id}`) : null) ||
         (data.user?.email ? localStorage.getItem(`bluetail_avatar_${data.user.email}`) : null);
       const userWithAvatar = existingAvatar ? { ...data.user, avatar: existingAvatar } : data.user;
-      auth.setUser(userWithAvatar);
       setUser(userWithAvatar);
       return data;
     } finally {
@@ -77,17 +90,12 @@ export function AuthProvider({ children }) {
   }, []);
 
   const register = useCallback(
-    async (username, email, password) => {
+    async (username, email, password, otp) => {
       setLoading(true);
       try {
-        const data = await authService.register(username, email, password);
-        if (data.access_token) {
-          auth.setToken(data.access_token);
-        }
-        if (data.user) {
-          auth.setUser(data.user);
-          setUser(data.user);
-        }
+        const data = await authService.register(username, email, password, otp);
+        // Do NOT automatically log in or set token:
+        // New users must log in on the Login page for the first time
         return data;
       } finally {
         setLoading(false);
@@ -106,7 +114,6 @@ export function AuthProvider({ children }) {
     setUser((prev) => {
       if (!prev) return null;
       const updated = { ...prev, avatar: avatarUrl || null };
-      auth.setUser(updated);
       if (prev.id) {
         if (avatarUrl) localStorage.setItem(`bluetail_avatar_${prev.id}`, avatarUrl);
         else localStorage.removeItem(`bluetail_avatar_${prev.id}`);

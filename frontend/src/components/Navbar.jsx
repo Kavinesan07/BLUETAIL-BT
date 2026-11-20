@@ -2,6 +2,7 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 
+
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const { count } = useCart();
@@ -14,7 +15,9 @@ export default function Navbar() {
 
   return (
     <header className="topbar">
-      <Link to="/" className="logo">Bluetail</Link>
+      <Link to="/" className="logo-brand" title="Bluetail Home">
+        <img src="/logo.png" alt="Bluetail" className="logo-img" />
+      </Link>
 
       <nav className="topbar-right">
         <NavLink to="/" end className="nav-link">Shop</NavLink>
@@ -26,8 +29,8 @@ export default function Navbar() {
           <>
             <NavLink to="/orders" className="nav-link">My orders</NavLink>
             
-            {/* Show "Add product" ONLY for Admin users (role === 1) */}
-            {user?.role === 1 && (
+            {/* Show "Add product" for Shop Owners (role 1) and Super Admin (role 2) */}
+            {(user?.role === 1 || user?.role === 2) && (
               <NavLink to="/admin/add-product" className="nav-link">Add product</NavLink>
             )}
 

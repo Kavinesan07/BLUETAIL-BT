@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute, GuestRoute, AdminRoute } from "./components/RouteGuards";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import ProductDetail from "./pages/ProductDetail";
@@ -22,6 +23,7 @@ export default function App() {
       <Route element={<GuestRoute />}>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
       </Route>
 
       {/* Only logged-in users */}

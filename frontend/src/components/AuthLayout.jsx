@@ -1,9 +1,13 @@
+import { Link } from "react-router-dom";
+
 export default function AuthLayout({ children }) {
   return (
     <main className="auth">
       <section className="brand">
-        <h1>Bluetail</h1>
-        <p>Keep every task in one place and know what is due next.</p>
+        <Link to="/" className="brand-logo-link" title="Bluetail Home">
+          <img src="/logo.png" alt="Bluetail" className="brand-logo-img" />
+        </Link>
+        <p>Your destination for top-quality toys, collectible cars, and seasonal favorites.</p>
       </section>
       <section className="panel">{children}</section>
     </main>

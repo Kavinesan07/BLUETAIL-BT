@@ -8,14 +8,16 @@ export class ApiError extends Error {
   }
 }
 
-// JWT token helper: parses base64url payload safely
+// JWT token helper: parses base64url payload safely with proper padding
 export function parseJwt(token) {
   if (!token || typeof token !== "string") return null;
   const parts = token.split(".");
   if (parts.length !== 3) return null;
   try {
-    const base64Url = parts[1];
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    let base64Url = parts[1];
+    let base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const pad = (4 - (base64.length % 4)) % 4;
+    base64 += "=".repeat(pad);
     const jsonPayload = decodeURIComponent(
       atob(base64)
         .split("")
@@ -40,12 +42,18 @@ export function isTokenValid(token) {
 }
 
 // JWT token & session management - strictly using sessionStorage for browser-session isolation
+// NOTE: ONLY the JWT is stored in sessionStorage under "access_token".
+// No user JSON payload is stored in sessionStorage.
 export const auth = {
   getToken: () => {
     // Purge any legacy localStorage tokens to ensure session isolation
     if (typeof localStorage !== "undefined" && localStorage.getItem("bluetail_token")) {
       localStorage.removeItem("bluetail_token");
       localStorage.removeItem("bluetail_user");
+    }
+    // Also clean up any legacy 'user' key in sessionStorage
+    if (typeof sessionStorage !== "undefined" && sessionStorage.getItem("user")) {
+      sessionStorage.removeItem("user");
     }
 
     const token = sessionStorage.getItem("access_token");
@@ -61,9 +69,14 @@ export const auth = {
     if (token) {
       sessionStorage.setItem("access_token", token);
     }
-    // Never store auth token in localStorage
+    // Never store auth token or user in localStorage
     if (typeof localStorage !== "undefined") {
-      localStorage.removeItem("bluetail_token");authcontext
+      localStorage.removeItem("bluetail_token");
+      localStorage.removeItem("bluetail_user");
+    }
+    // Never store plain user JSON in sessionStorage
+    if (typeof sessionStorage !== "undefined") {
+      sessionStorage.removeItem("user");
     }
   },
 
@@ -76,24 +89,25 @@ export const auth = {
     }
   },
 
+  // Decode user identity directly from the verified JWT payload
+  // Never reads or writes a plain user JSON payload to sessionStorage
   getUser: () => {
-    // Only return user if a valid unexpired token exists in sessionStorage
     const token = auth.getToken();
-    if (!token) {
-      sessionStorage.removeItem("user");
-      return null;
-    }
-    try {
-      const user = sessionStorage.getItem("user");
-      return user ? JSON.parse(user) : null;
-    } catch {
-      return null;
-    }
+    if (!token) return null;
+    const payload = parseJwt(token);
+    if (!payload) return null;
+    return {
+      id: payload.user_id ? Number(payload.user_id) : (payload.sub ? Number(payload.sub) : null),
+      username: payload.username || payload.sub || "",
+      email: payload.email || "",
+      role: typeof payload.role === "number" ? payload.role : 0,
+    };
   },
 
-  setUser: (user) => {
-    if (user) {
-      sessionStorage.setItem("user", JSON.stringify(user));
+  // No-op for user storage: we do NOT store user JSON in sessionStorage
+  setUser: () => {
+    if (typeof sessionStorage !== "undefined") {
+      sessionStorage.removeItem("user");
     }
   },
 

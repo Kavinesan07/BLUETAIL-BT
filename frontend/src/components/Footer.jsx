@@ -7,8 +7,8 @@ export default function Footer() {
     <footer className="footer">
       <div className="footer-top">
         <div className="footer-col brand-col">
-          <Link to="/" className="footer-logo">
-            Bluetail
+          <Link to="/" className="footer-logo" title="Bluetail Home">
+            <img src="/logo.png" alt="Bluetail" className="footer-logo-img" />
           </Link>
           <p className="footer-desc">
             Your destination for top-quality toys, collectible cars, and summer & winter favorites. Premium products, hassle-free shopping, and reliable delivery.
